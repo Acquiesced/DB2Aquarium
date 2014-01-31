@@ -1,0 +1,825 @@
+CPS 510 Project Part 2
+
+Name:                    Student Number:
+Besson Lam               500375819
+Bradley Chow             500377584
+Siu Pong Wong            500331421
+Valentin Serrago         500392726
+
+
+#CPS510Pt2.sh
+#!/bin/bash
+
+. db2init
+db2 connect to db2data
+
+echo "Creating Tables"
+
+db2 CREATE TABLE Employee"(EmployeeID INTEGER NOT NULL, Name VARCHAR(30), Gender CHAR(1), SIN INTEGER NOT NULL, DOB DATE, Position VARCHAR(30), Shift VARCHAR(20), Salary DECIMAL(9,2) NOT NULL, PRIMARY KEY (EmployeeID), UNIQUE(SIN))"
+db2 CREATE TABLE Inventory"(InventoryID INTEGER NOT NULL, InventoryName VARCHAR(40), InventoryType VARCHAR(20), Price DECIMAL(9,2), QuantityinStock INTEGER, PRIMARY KEY(InventoryID))"
+db2 CREATE TABLE Tank"(TankID INTEGER NOT NULL, WaterType VARCHAR(20), WaterTemp DECIMAL(9,2), TankSize INTEGER, PRIMARY KEY(TankID))"
+db2 CREATE TABLE Fish"(FishID INTEGER NOT NULL, TankID INTEGER, Weight DECIMAL(9,2), InventoryID INTEGER NOT NULL, PRIMARY KEY (FishID),FOREIGN KEY IFK(InventoryID) REFERENCES Inventory, FOREIGN KEY TFK(TankID) REFERENCES Tank)"
+db2 CREATE TABLE Transactions"(TransactionID INTEGER NOT NULL, TotalPrice DECIMAL(9,2) NOT NULL, EmployeeID INTEGER NOT NULL, Quantity INTEGER, InventoryID INTEGER NOT NULL, Date DATE, PRIMARY KEY (TransactionID), FOREIGN KEY EFK (EmployeeID) REFERENCES Employee, FOREIGN KEY IFK(InventoryID) REFERENCES Inventory)"
+db2 CREATE TABLE Customer"(CustomerID INTEGER NOT NULL, TransactionID INTEGER NOT NULL, PRIMARY KEY(CustomerID), FOREIGN KEY TRFK (TransactionID) REFERENCES Transactions)";
+
+
+
+#DROP.SH
+#!/bin/bash
+
+. db2init
+db2 connect to db2data
+
+echo "Dropping Table"
+
+db2 DROP TABLE Employee
+db2 DROP TABLE Fish
+db2 DROP TABLE Transactions
+db2 DROP TABLE Tank
+db2 DROP TABLE Inventory
+db2 DROP TABLE Customer;
+
+
+
+#LIST.sh
+#!/bin/bash
+
+. db2init
+db2 connect to db2data
+
+echo "Calling Table Methods"
+
+db2 LIST TABLES;
+
+
+
+#MAIN.sh
+#!/bin/bash
+
+#Source all menu functions
+. MENU.sh
+. QUERYMENU.sh
+. QUERYDISPLAY.sh
+. QUERYSELECT.sh
+. QUERYVIEW.sh
+. QUERYUNION.sh
+. QUERYBETWEEN.sh
+. QUERYOTHER.sh
+
+#Global functions
+quitProgram()
+{
+    echo "Exiting DB2 system. Have a good day."
+    exit 0
+}
+
+initdb2()
+{
+    . db2init
+    db2 connect to db2data
+}
+
+customQuery()
+{
+    echo "Enter a Custom Query"
+    echo -n ">"
+    read line
+    initdb2
+    db2 "$line";
+}
+
+#Welcome message
+echo "Welcome to the DB2 system. Please enter a command"
+
+#Call Main function
+main
+
+
+
+#MENU.sh
+#!/bin/bash
+
+#Help text for main menu
+helpMain()
+{
+    echo 
+    echo "Main Menu Commands:"
+    echo "1)Create Tables"
+    echo "2)Populate Tables"
+    echo "3)Drop Tables"
+    echo "4)List Tables"
+    echo "5)Queries"
+    echo "6)Initialize(Create & Populate Tables)"
+    echo "7)Denitialize(Drop Tables & Quit)"
+    echo "h)Help"
+    echo "q)Quit"
+}
+
+#Routine for creating tables
+create()
+{
+    ./CPS510Pt2.sh
+}
+
+#Routine for populating tables
+populate()
+{
+    ./VALUES.sh
+}
+
+#Routine for dropping tables
+drop()
+{
+    ./DROP.sh
+}
+
+#Routine for populating tables
+list()
+{
+    ./LIST.sh
+}
+
+main()
+{
+    #Main section
+    helpMain
+
+    while [ true ]; do
+        echo -n ">"
+        read line
+        #Create Tables
+        if [ $line = 1 ]; then
+            create
+            helpMain
+            #Populate
+        elif [ $line = 2 ]; then
+            populate
+            helpMain
+            #Drop
+        elif [ $line = 3 ]; then
+            drop
+            helpMain
+            #List
+        elif [ $line = 4 ]; then
+            list
+            helpMain
+            #Query Menu
+        elif [ $line = 5 ]; then
+            queriesMain     #Found in QUERIES.sh    
+            helpMain
+            #Initialize
+        elif [ $line = 6 ]; then
+            create
+            populate
+            helpMain
+            #Denitialize
+        elif [ $line = 7 ]; then
+            drop
+            quitProgram
+        elif [ $line = "H" ] || [ $line = "h" ]; then
+            helpMain
+        elif [ $line = "Q" ] || [ $line = "q" ]; then
+            quitProgram
+        else
+            echo "Command not understood. Please re-enter a command."
+            echo "Type H for help"
+        fi
+    done
+}
+
+
+
+#QUERYBETWEEN.sh
+#!/bin/bash
+
+#Help text for Between Menu
+helpBetween()
+{
+    echo
+    echo "Between Table Menu Commands:"
+    echo "1)Weights Between 50 and 150"
+    echo "2)Gift Prices Between 4 and 10 Dollars"
+    echo "3)Employee Salaries between 50K and 70K"
+    echo "4)Employee SINs between 900000000 and 999999999"
+    echo "5)Employees with birthdays between 1980 and 1990"
+    echo "c)Custom Query"
+    echo "h)Help"
+    echo "r)Return"
+    echo "q)Quit"
+}
+
+#Give Between Menu
+betweenMenu()
+{
+    helpBetween
+
+    while [ true ]; do
+        echo -n ">"
+        read line
+        if [ $line = 1 ]; then
+            echo "Finding all Inventory Tuples with Weights between 50 and 150 lbs."
+            initdb2
+            db2 "select * from Fish where Weight between 50 and 150";
+            helpBetween
+        elif [ $line = 2 ]; then
+            echo "Finding all Gift Type Inventory Tuples with Price bewteen 4 and 10 Dollars"
+            initdb2
+            db2 "select * from Inventory where InventoryType='Gift' AND Price between 4 and 10";
+            helpBetween
+        elif [ $line = 3 ]; then
+            echo "Finding Salaries between 50k and 70k per year"
+            initdb2
+            db2 "select * from Employee where Salary between 50000 and 70000";
+            helpBetween
+        elif [ $line = 4 ]; then
+            echo "Finding Employee SINs between 900000000 and 999999999"
+            initdb2
+            db2 "select * from Employee where SIN between 900000000 and 999999999";
+            helpBetween
+        elif [ $line = 5 ]; then
+            echo "Finding Employees born between 1980 and 1990"
+            initdb2
+            db2 "select * from Employee where Dob between '1979-12-31' and '1990-01-01'";
+            helpBetween
+        elif [ $line = "C" ] || [ $line = "c" ]; then
+            customQuery
+            helpBetween
+        elif [ $line = "H" ] || [ $line = "h" ]; then
+            helpBetween
+        elif [ $line = "R" ] || [ $line = "r" ]; then
+            echo "Returning..."
+            break
+        elif [ $line = "Q" ] || [ $line = "q" ]; then
+            quitProgram
+        else
+            echo "Command not understood. Please re-enter a command."
+            echo "Type H for help"
+        fi
+    done
+}
+
+
+
+#QUERYDISPLAY.sh
+#!/bin/bash
+
+#Help text for Display Menu
+helpDisplay()
+{
+    echo
+    echo "Display Table Menu Commands:"
+    echo "1)Display Employee Table"
+    echo "2)Display Inventory Table"
+    echo "3)Display Tank Table"
+    echo "4)Display Fish Table"
+    echo "5)Display Transactions Table"
+    echo "6)Display Customer Table"
+    echo "7)Display ALL tables"
+    echo "c)Custom Query"
+    echo "h)Help"
+    echo "r)Return"
+    echo "q)Quit"
+}
+
+#Display Query Menu
+displayMenu()
+{
+    helpDisplay
+
+    while [ true ]; do
+        echo -n ">"
+        read line
+        if [ $line = 1 ]; then
+            echo "Displaying Employee table..."
+            initdb2
+            db2 "SELECT * from Employee";
+            helpDisplay
+        elif [ $line = 2 ]; then
+            echo "Displaying Inventory table..."
+            initdb2
+            db2 "SELECT * from Inventory";
+            helpDisplay
+        elif [ $line = 3 ]; then
+            echo "Displaying Tank table..."
+            initdb2
+            db2 "SELECT * from Tank";
+            helpDisplay
+        elif [ $line = 4 ]; then
+            echo "Displaying Fish table..."
+            initdb2
+            db2 "SELECT * from Fish";
+            helpDisplay
+        elif [ $line = 5 ]; then
+            echo "Displaying Tansactions table..."
+            initdb2
+            db2 "SELECT * from Transactions";
+            helpDisplay
+        elif [ $line = 6 ]; then
+            echo "Displaying Customer table..."
+            initdb2
+            db2 "SELECT * from Customer";
+            helpDisplay
+        elif [ $line = 7 ]; then
+            echo "Displaying ALL tables..."
+            initdb2
+            db2 "SELECT * from Employee";
+            db2 "SELECT * from Inventory";
+            db2 "SELECT * from Tank";
+            db2 "SELECT * from Fish";
+            db2 "SELECT * from Transactions";
+            db2 "SELECT * from Customer";
+            helpDisplay
+        elif [ $line = "C" ] || [ $line = "c" ]; then
+            customQuery
+            helpDisplay
+        elif [ $line = "H" ] || [ $line = "h" ]; then
+            helpDisplay
+        elif [ $line = "R" ] || [ $line = "r" ]; then
+            echo "Returning..."
+            break
+        elif [ $line = "Q" ] || [ $line = "q" ]; then
+            quitProgram
+        else
+            echo "Command not understood. Please re-enter a command."
+            echo "Type H for help"
+        fi
+    done
+}
+
+
+
+#QUERYMENU.sh
+#!/bin/bash
+
+#Help text for main Query menu
+helpQueriesMain()
+{
+    echo
+    echo "Query Menu Command"
+    echo "1)Display Tables"
+    echo "2)Selection"
+    echo "3)Views"
+    echo "4)Between"
+    echo "5)Others"
+    echo "c)Custom Query"
+    echo "h)Help"
+    echo "r)Return"
+    echo "q)Quit"
+}
+
+#Main Query Menu
+queriesMain()
+{
+    helpQueriesMain
+
+    while [ true ]; do
+        echo -n ">"
+        read line
+        if [ $line = 1 ]; then
+            displayMenu        #Found in QUERYDISPLAY.SH
+            helpQueriesMain
+        elif [ $line = 2 ]; then
+            selectMenu          #Found in QUERYSELECT.sh
+            helpQueriesMain
+        elif [ $line = 3 ]; then
+            viewMenu            #Found in QUERYVIEW.sh
+            helpQueriesMain
+        elif [ $line = 4 ]; then
+            betweenMenu
+            helpQueriesMain
+        elif [ $line = 5 ]; then
+            otherMenu
+            helpQueriesMain
+        elif [ $line = "C" ] || [ $line = "c" ]; then
+            customQuery
+            helpQueriesMain
+        elif [ $line = "H" ] || [ $line = "h" ]; then
+            helpQueriesMain
+        elif [ $line = "R" ] || [ $line = "r" ]; then
+            echo "Returning to main menu..."
+            break
+        elif [ $line = "Q" ] || [ $line = "q" ]; then
+            quitProgram
+        else
+            echo "Command not understood. Please re-enter a command."
+            echo "Type H for help"
+        fi
+
+    done
+}
+
+
+
+#QUERYOTHER.sh
+#!/bin/bash
+
+#Help text for Other Menu
+helpOther()
+{
+    echo
+    echo "Other Table Menu Commands:"
+    echo "1)Display total price of Inventory"
+    echo "2)Select all employees with last name \"Jung\""
+    echo "3)Find average of all Inventory prices"
+    echo "4)Total Count of Fish"
+    echo "5)Union of Fish and Tickets"
+    echo "6)Largest Fish Weight"
+    echo "7)Update prices"
+    echo "8)Select Transactions after 09/25/2012"
+    echo "9)Update Employee Salary"
+    echo "10)Order Inventory by price*1.13"
+    echo "c)Custom Query"
+    echo "h)Help"
+    echo "r)Return"
+    echo "q)Quit"
+}
+
+#Give Other Menu
+otherMenu()
+{
+    helpOther
+
+    while [ true ]; do
+        echo -n ">"
+        read line
+        if [ $line = 1 ]; then
+            echo "Displaying the total price of all inventory items (stock * price)"
+            initdb2
+            db2 "select inventoryname, inventorytype, price, quantityinstock, price*quantityinstock AS Total_Price from Inventory"; 
+            helpOther
+        elif [ $line = 2 ]; then
+            echo "Selecting all employees with the Last name \"Jung\""
+            initdb2
+            db2 "select * FROM Employee WHERE (name LIKE '%Jung')";
+            helpOther
+        elif [ $line = 3 ]; then
+            echo "Finding the average of all Inventory prices"
+            db2 "select AVG(Price) AS AvgInvPrice FROM inventory ";
+            helpOther
+        elif [ $line = 4 ]; then
+            echo "Finding the Total Count of Fish." 
+            initdb2
+            db2 "select COUNT(FishID) AS TotalFish FROM Fish";
+            helpOther
+        elif [ $line = 5 ]; then
+            echo "Selecting union of Fish and Tickets"
+            initdb2
+            db2 "select * from Inventory where InventoryType='Fish' union select * from inventory where inventorytype='Ticket'";
+            helpOther
+        elif [ $line = 6 ]; then
+            echo "Finding the largest fish weight." 
+            initdb2
+            db2 "select Max(Weight) AS HeaviestFish FROM Fish";
+            helpOther
+        elif [ $line = 7 ]; then
+            echo "Updating Inventory Prices"
+            initdb2
+            db2 "select Price from Inventory"
+            db2 "UPDATE Inventory set Price = Price * 0.97"
+            db2 "select Price from Inventory";
+            helpOther
+        elif [ $line = 8 ]; then
+            echo "Finding Transactions that Occured on or after 09/25/2012." 
+            initdb2
+            db2 "SELECT * FROM Transactions where (Date>= '2012-09-25')";
+            helpOther
+        elif [ $line = 9 ]; then
+            echo "Update Employee Salary"
+            initdb2
+            db2 "select Name, Salary from Employee"
+            db2 "UPDATE Employee set Salary = Salary + 500"
+            db2 "select Name, Salary from Employee";
+            helpOther
+        elif [ $line = 10 ]; then
+            echo "Find total price plus tax on Inventory Prices, and order by Price." 
+            initdb2
+            db2 "SELECT InventoryID, InventoryName, Price * 1.13 AS PriceWithTax FROM Inventory ORDER BY 3, InventoryID";
+            helpOther
+        elif [ $line = "C" ] || [ $line = "c" ]; then
+            customQuery
+            helpOther
+        elif [ $line = "H" ] || [ $line = "h" ]; then
+            helpOther
+        elif [ $line = "R" ] || [ $line = "r" ]; then
+            echo "Returning..."
+            break
+        elif [ $line = "Q" ] || [ $line = "q" ]; then
+            quitProgram
+        else
+            echo "Command not understood. Please re-enter a command."
+            echo "Type H for help"
+        fi
+    done
+}
+
+
+
+#QUERYSELECT.sh
+#!/bin/bash
+
+#Help text for Select Menu
+helpSelect()
+{
+    echo
+    echo "Select Menu Command"
+    echo "1)Select all employees who are managers"
+    echo "2)Select all female employees"
+    echo "3)Select all male employees"
+    echo "4)Select all fish in the Fish table"
+    echo "5)Select all inventory of Type: Fish"
+    echo "6)Select all Inventory all inventory tuples between \$1 and \$20"
+    echo "7)Select all employees that are floor cleaners"
+    echo "8)Select all employees that are general workers"
+    echo "9)Select all employees that are sales representatives"
+    echo "10)Select all employees that are tank cleaners"
+    echo "11)Select all employees that are tank inspectors"
+    echo "12)Select all employees that are veterinarians"
+    echo "13)Select all customer transaction details"
+    echo "14)Select all inventory of type gift"
+    echo "15)Select all inventory of type ticket"
+    echo "c)Custom Query"
+    echo "h)Help"
+    echo "r)Return"
+    echo "q)Quit"
+}
+
+#Select Query Menu
+selectMenu()
+{
+    helpSelect
+
+    while [ true ]; do
+        echo -n ">"
+        read line
+        if [ $line = 1 ]; then
+            echo "Selecting all managers..."
+            initdb2
+            db2 "SELECT EmployeeID, Gender, Name, Dob, Shift, Salary from Employee where Position='Manager'";
+            helpSelect
+        elif [ $line = 2 ]; then
+            echo "Selecting all female employees..."
+            initdb2
+            db2 "SELECT EmployeeID, Name from Employee where Gender='F'";
+            helpSelect
+        elif [ $line = 3 ]; then
+            echo "Selecting all male employees..."
+            initdb2
+            db2 "SELECT EmployeeID, Name from Employee where Gender='M'"
+            helpSelect
+        elif [ $line = 4 ]; then
+            echo "Selecting all fish in the fish table"
+            initdb2
+            db2 "SELECT Fish.FishID, Inventory.InventoryName, Fish.InventoryID FROM Fish, Inventory WHERE Inventory.InventoryID = FISH.InventoryID";
+            helpSelect
+        elif [ $line = 5 ]; then
+            echo "Selecting all inventory of type fish..."
+            initdb2
+            db2 "SELECT InventoryName from Inventory where InventoryType='Fish'";
+            helpSelect
+        elif [ $line = 6 ]; then
+            echo "Selecting all inventory tuples priced between \$1 and \$20"
+            initdb2
+            db2 "SELECT * from Inventory where price between 1 and 20";
+            helpSelect
+        elif [ $line = 7 ]; then
+            echo "Selecting all employees that are floor cleaners"
+            initdb2
+            db2 "SELECT EmployeeID, Gender, Name, Dob, Shift, Salary from Employee where Position='Floor Cleaner'";
+            helpSelect
+        elif [ $line = 8 ]; then
+            echo "Selecting all employees that are general workers"
+            initdb2
+            db2 "SELECT EmployeeID, Gender, Name, Dob, Shift, Salary from Employee where Position='General Worker'";
+            helpSelect
+        elif [ $line = 9 ]; then
+            echo "Selecting all employees that are sales representatives"
+            initdb2
+            db2 "SELECT EmployeeID, Gender, Name, Dob, Shift, Salary from Employee where Position='Sales Representative'"; 
+            helpSelect
+        elif [ $line = 10 ]; then
+            echo "Selecting all employees that are Tank Cleaners"
+            initdb2
+            db2 "SELECT EmployeeID, Gender, Name, Dob, Shift, Salary from Employee where Position='Tank Cleaner'";
+            helpSelect
+        elif [ $line = 11 ]; then
+            echo "Selecting all employees that are Tank Inspectors"
+            initdb2
+            db2 "SELECT EmployeeID, Gender, Name, Dob, Shift, Salary from Employee where Position='Tank Inspection'";
+            helpSelect
+        elif [ $line = 12 ]; then
+            echo "Selecting all employees that are veterinarians"
+            initdb2
+            db2 "SELECT EmployeeID, Gender, Name, Dob, Shift, Salary from Employee where Position='Veterinarian'";
+            helpSelect
+        elif [ $line = 13 ]; then
+            echo "Selecting all customer transaction details"
+            initdb2
+            db2 "SELECT Customer.CustomerID, Customer.TransactionID, Transactions.TotalPrice, Transactions.EmployeeID, Quantity, InventoryID, Date FROM Customer, Transactions WHERE Customer.TransactionID = Transactions.TransactionID";
+            helpSelect
+        elif [ $line = 14 ]; then
+            echo "Selecting all inventory of type gift"
+            initdb2
+            db2 "SELECT InventoryID, InventoryName, Price, QuantityinStock from Inventory where InventoryType='Gift'";
+            helpSelect
+        elif [ $line = 15 ]; then
+            echo "Selecting all inventory of type ticket"
+            initdb2
+            db2 "SELECT InventoryID, InventoryName, Price, QuantityinStock from Inventory where InventoryType='Ticket'";
+            helpSelect
+        elif [ $line = "C" ] || [ $line = "c" ]; then
+            customQuery
+            helpSelect
+        elif [ $line = "H" ] || [ $line = "h" ]; then
+            helpSelect
+        elif [ $line = "R" ] || [ $line = "r" ]; then
+            echo "Returning..."
+            break
+        elif [ $line = "Q" ] || [ $line = "q" ]; then
+            quitProgram
+        else
+            echo "Command not understood. Please re-enter a command."
+            echo "Type H for help"
+        fi
+    done
+}
+
+
+
+#QUERYVIEW.sh
+#!/bin/bash
+
+#Help text for View Menu
+helpView()
+{
+    echo
+    echo "View Table Menu Commands:"
+    echo "1)Manager's View"
+    echo "2)General Employee's View"
+    echo "3)Sales Representative View"
+    echo "4)Tank Maitennance View"
+    echo "5)Price View"
+    echo "d)Drop ALL views"
+    echo "c)Custom Query"
+    echo "h)Help"
+    echo "r)Return"
+    echo "q)Quit"
+}
+
+#Give View Menu
+viewMenu()
+{
+    helpView
+
+    while [ true ]; do
+        echo -n ">"
+        read line
+        if [ $line = 1 ]; then
+            echo "Creating View for managers"
+            initdb2
+            db2 Create View manager_view AS "(SELECT EmployeeID, Gender, Dob, Position, Shift FROM Employee where Position<>'Manager')"
+            db2 "SELECT * from manager_view";
+            helpView
+        elif [ $line = 2 ]; then
+            echo "Creating General View for employees"
+            db2 Create View general_employee AS "(SELECT employeeid, name, gender, position FROM Employee)"
+            db2 "Select * from general_employee";
+            helpView
+        elif [ $line = 3 ]; then
+            echo "Creating Sales Representative View"
+            initdb2
+            db2 Create View sales_rep_view AS "(SELECT InventoryID, InventoryName, Price, QuantityinStock from Inventory where InventoryType='Ticket')"
+            db2 "SELECT * from sales_rep_view";
+            helpView
+        elif [ $line = 4 ]; then
+            echo "Creating Matiennance View"
+            initdb2
+            db2 Create View maitennance_view AS "(SELECT Inventory.InventoryID, Inventory.InventoryName, Fish.Weight, Tank.TankID, Tank.WaterType, Tank.WaterTemp from Fish, Inventory, Tank where Inventory.InventoryType = 'Fish' AND Tank.TankID = Fish.TankID)"
+            db2 "SELECT * from maitennance_view";
+            helpView
+        elif [ $line = 5 ]; then
+            echo "Creating Price View"
+            initdb2
+            db2 Create View price_view AS "(SELECT InventoryName, Price from Inventory where InventoryType = 'Ticket')"
+            db2 "SELECT * from price_view";
+            helpView
+        elif [ $line = "C" ] || [ $line = "c" ]; then
+            customQuery
+            helpView
+        elif [ $line = "D" ] || [ $line = "d" ]; then
+            echo "Dropping ALL views"
+            initdb2
+            db2 DROP View manager_view;
+            db2 DROP View general_employee;
+            db2 DROP View sales_rep_view;
+            db2 DROP View maitennance_view;
+            db2 DROP View price_view;
+            helpView
+        elif [ $line = "H" ] || [ $line = "h" ]; then
+            helpView
+        elif [ $line = "R" ] || [ $line = "r" ]; then
+            echo "Returning..."
+            break
+        elif [ $line = "Q" ] || [ $line = "q" ]; then
+            quitProgram
+        else
+            echo "Command not understood. Please re-enter a command."
+            echo "Type H for help"
+        fi
+    done
+}
+
+
+
+#SELECT.sh
+#!/bin/bash
+
+. db2init
+db2 connect to db2data
+
+echo "Calling Tables"
+
+db2 "select * from Employee"
+db2 "select * from Fish"
+db2 "select * from Transactions"
+db2 "select * from Tank"
+db2 "select * from Inventory"
+db2 "select * from Customer";
+
+
+
+#VALUES.sh
+#!/bin/bash
+
+. db2init
+db2 connect to db2data
+
+echo "Populating Tables with Values"
+
+db2 INSERT INTO Employee VALUES "(1, 'Johnny Zhu', 'M', 990876334, '1992-06-23','Veterinarian', 'Day', 80000.00)"
+db2 INSERT INTO Employee VALUES "(2, 'Benji Wong', 'M', 990513523, '1991-01-04','Manager', 'Day', 135000.00)"
+db2 INSERT INTO Employee VALUES "(3, 'Bradley Chow', 'M', 990512358,'1991-04-08', 'Manager', 'Day', 123599.00)"
+db2 INSERT INTO Employee VALUES "(4, 'Besson Lam', 'M', 990312523,'1976-04-05', 'Veterinarian', 'Day', 82000.00)"
+db2 INSERT INTO Employee VALUES "(5, 'Valentin Serrago', 'M', 990842343, '1990-02-04', 'Sales Representative', 'Day', 50000.00)"
+db2 INSERT INTO Employee VALUES "(6, 'Syed Zubair', 'M', 991412423, '1986-05-29', 'Sales Representative', 'Day', 43000.00)"
+db2 INSERT INTO Employee VALUES "(7, 'Sam Lidder', 'M', 991512352, '1992-03-10', 'Sales Representative', 'Day', 43000.00)"
+db2 INSERT INTO Employee VALUES "(8, 'Daniel Maugeri', 'M', 951253120, '1988-10-14', 'Sales Representative', 'Day', 43000.00)"
+db2 INSERT INTO Employee VALUES "(9, 'Victor Tong', 'M', 851251252, '1982-02-04','Tank Inspection', 'Day', 50000.00)"
+db2 INSERT INTO Employee VALUES "(10, 'Nicole Jung', 'F', 971417422, '1989-03-17', 'Tank Inspection', 'Night', 60000.00)"
+db2 INSERT INTO Employee VALUES "(11, 'Jessica Jung', 'F', 972317434, '1990-04-02', 'Tank Inspection', 'Night', 60000.00)"
+db2 INSERT INTO Employee VALUES "(12, 'Krystal Jung', 'F', 983217811, '1987-02-19', 'General Worker', 'Day', 45000.00)"
+db2 INSERT INTO Employee VALUES "(13, 'Gyuri Park', 'F', 921317423, '1989-09-13', 'General Worker', 'Day', 47000.00)"
+db2 INSERT INTO Employee VALUES "(14, 'Joo-Hyun Seo', 'F', 671417422, '1991-11-23', 'General Worker', 'Night', 50000.00)"
+db2 INSERT INTO Employee VALUES "(15, 'Yoon-Ah Im', 'F', 541412322, '1986-05-22', 'General Worker', 'Night', 40000.00)"
+db2 INSERT INTO Employee VALUES "(16, 'Yuri Kwon', 'F', 671414231, '1985-04-19', 'Tank Cleaner', 'Night', 40000.00)"
+db2 INSERT INTO Employee VALUES "(17, 'Taeyeon Kim', 'F', 512857834, '1988-09-09', 'Tank Cleaner', 'Night', 40000.00)"
+db2 INSERT INTO Employee VALUES "(18, 'Ji-Hyo Song', 'F', 523159042, '1989-04-22', 'Floor Cleaner', 'Day', 43000.00)"
+db2 INSERT INTO Employee VALUES "(19, 'Bo-Young Park', 'F', 768239444, '1990-01-02', 'Floor Cleaner', 'Night', 42000.00)"
+
+db2 INSERT INTO Inventory VALUES "(1, 'Goldfish', 'Fish', 2.00, 100)"
+db2 INSERT INTO Inventory VALUES "(2, 'Angel Fish', 'Fish', 25.00, 70)"
+db2 INSERT INTO Inventory VALUES "(3, 'General Admission', 'Ticket', 13.50, 1000)"
+db2 INSERT INTO Inventory VALUES "(4, 'Manta Ray', 'Fish', 10000.00, 3)"
+db2 INSERT INTO Inventory VALUES "(5, 'Senior Admission', 'Ticket', 9.00, 1000)"
+db2 INSERT INTO Inventory VALUES "(6, 'Child Admission', 'Ticket', 7.75, 1000)"
+db2 INSERT INTO Inventory VALUES "(7, 'Nurse Shark', 'Fish', 12000.00, 2)"
+db2 INSERT INTO Inventory VALUES "(8, 'Monk Fish', 'Fish', 200.00, 13)"
+db2 INSERT INTO Inventory VALUES "(9, 'Blue Pen', 'Gift', 1.00, 100)"
+db2 INSERT INTO Inventory VALUES "(10, 'Thermos', 'Gift', 5.00, 30)"
+
+db2 INSERT INTO Tank VALUES "(1, 'Fresh', 34.5, 10000)"
+db2 INSERT INTO Tank VALUES "(2, 'Salt', 36.4, 10000)"
+
+db2 INSERT INTO Fish VALUES "(1, 1, 20.01, 8)"
+db2 INSERT INTO Fish VALUES "(2, 1, 23.22, 8)"
+db2 INSERT INTO Fish VALUES "(3, 2, 120.33, 4)"
+db2 INSERT INTO Fish VALUES "(4, 2, 60.00, 7)"
+db2 INSERT INTO Fish VALUES "(5, 1, 0.3, 1)"
+
+db2 INSERT INTO Transactions VALUES "(1, 20.50, 1, 2, 3, '2012-09-22')"
+db2 INSERT INTO Transactions VALUES "(2, 25.00, 2, 1, 2, '2012-09-22')"
+db2 INSERT INTO Transactions VALUES "(3, 8.00, 4, 4, 1, '2012-09-22')"
+db2 INSERT INTO Transactions VALUES "(4, 6.00, 6, 2, 9, '2012-09-23')"
+db2 INSERT INTO Transactions VALUES "(5, 5.00, 19, 1, 10, '2012-09-23')"
+db2 INSERT INTO Transactions VALUES "(6, 38.75, 17, 5, 6, '2012-09-23')"
+db2 INSERT INTO Transactions VALUES "(7, 400.00, 16, 2, 8, '2012-09-25')"
+db2 INSERT INTO Transactions VALUES "(8, 14000.00, 2, 2, 7, '2012-09-25')"
+db2 INSERT INTO Transactions VALUES "(9, 9.00, 11, 1, 5, '2012-09-25')"
+db2 INSERT INTO Transactions VALUES "(10, 14.00, 12, 7, 1, '2012-09-26')"
+db2 INSERT INTO Transactions VALUES "(11, 10000.00, 10, 1, 4, '2012-09-26')"
+db2 INSERT INTO Transactions VALUES "(12, 4.00, 9, 4, 9, '2012-09-26')" 
+
+db2 INSERT INTO Customer VALUES "(1, 1)"
+db2 INSERT INTO Customer VALUES "(2, 2)"
+db2 INSERT INTO Customer VALUES "(3, 3)"
+db2 INSERT INTO Customer VALUES "(4, 4)"
+db2 INSERT INTO Customer VALUES "(5, 5)"
+db2 INSERT INTO Customer VALUES "(6, 6)"
+db2 INSERT INTO Customer VALUES "(7, 7)"
+db2 INSERT INTO Customer VALUES "(8, 8)"
+db2 INSERT INTO Customer VALUES "(9, 9)"
+db2 INSERT INTO Customer VALUES "(10, 10)"
+db2 INSERT INTO Customer VALUES "(11, 11)"
+db2 INSERT INTO Customer VALUES "(12, 12)"
+
+
+
