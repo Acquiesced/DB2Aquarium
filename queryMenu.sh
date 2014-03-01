@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#..
 #Help text for main Query menu
 helpQueriesMain()
 {
